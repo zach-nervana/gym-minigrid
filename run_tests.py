@@ -24,3 +24,5 @@ for envName in sorted(envSet):
         env.render('rgb_array')
 
     env.close()
+
+print('testing complete')
