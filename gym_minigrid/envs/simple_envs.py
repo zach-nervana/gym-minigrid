@@ -32,6 +32,19 @@ register(
     entry_point='gym_minigrid.envs:EmptyEnv16x16'
 )
 
+class RandomGoalEnv(MiniGridEnv):
+    """
+    Empty grid environment, no obstacles, sparse reward, random goal positions, goal provided as part of the observation
+    """
+
+    def __init__(self, size=8):
+        super().__init__(gridSize=size, maxSteps=3 * size, observe_goal=True, random_goal=True)
+
+register(
+    id='MiniGrid-RandomGoal-8x8-v0',
+    entry_point='gym_minigrid.envs:RandomGoalEnv'
+)
+
 class DoorKeyEnv(MiniGridEnv):
     """
     Environment with a door and key, sparse reward

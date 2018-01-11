@@ -499,8 +499,15 @@ class MiniGridEnv(gym.Env):
         forward = 2
         toggle = 3
 
-    def __init__(self, gridSize=16, maxSteps=100, observe_goal=False):
+    def __init__(self, gridSize=16, maxSteps=100, observe_goal=False, random_goal=False):
         self.observe_goal = observe_goal
+        self.random_goal = random_goal
+
+        # Environment configuration
+        self.gridSize = gridSize
+        self.maxSteps = maxSteps
+        self.startPos = (1, 1)
+        self.startDir = 0
 
         # Action enumeration for this environment
         self.actions = MiniGridEnv.Actions
@@ -517,7 +524,7 @@ class MiniGridEnv(gym.Env):
 
         if observe_goal:
             self.observation_space = spaces.Dict({
-                'goal': spaces.Box(low=0, high=max(width, height), shape=(2)),
+                'goal': spaces.Box(low=0, high=max(self.gridSize, self.gridSize), shape=(2)),
                 'image': image_space,
             })
         else:
@@ -532,15 +539,22 @@ class MiniGridEnv(gym.Env):
         # Renderer used to render observations (small-scale agent view)
         self.obsRender = None
 
-        # Environment configuration
-        self.gridSize = gridSize
-        self.maxSteps = maxSteps
-        self.startPos = (1, 1)
-        self.startDir = 0
-
         # Initialize the state
         self.seed()
         self.reset()
+
+    def _generate_random_goal(self, grid):
+        # Place the final goal
+        while True:
+            self.goalPos = (
+                self._randInt(1, self.gridSize),
+                self._randInt(1, self.gridSize),
+            )
+
+            # Make sure the goal doesn't overlap with the agent
+            if self.goalPos != self.startPos:
+                grid.set(*self.goalPos, Goal())
+                break
 
     def _genGrid(self, width, height):
         """
@@ -558,9 +572,12 @@ class MiniGridEnv(gym.Env):
             grid.set(0, j, Wall())
             grid.set(height - 1, j, Wall())
 
-        # Place a goal in the bottom-left corner
-        self.goal = (width - 2, height - 2)
-        grid.set(*self.goal, Goal())
+        if self.random_goal:
+            self._generate_random_goal(grid)
+        else:
+            # Place a goal in the bottom-left corner
+            self.goalPos = (width - 2, height - 2)
+            grid.set(*self.goalPos, Goal())
 
         return grid
 
@@ -721,7 +738,7 @@ class MiniGridEnv(gym.Env):
         obs = grid.encode()
 
         if self.observe_goal:
-            return obs, self.goal
+            return obs, self.goalPos
         else:
             return obs
 
