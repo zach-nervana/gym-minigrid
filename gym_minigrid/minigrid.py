@@ -499,7 +499,9 @@ class MiniGridEnv(gym.Env):
         forward = 2
         toggle = 3
 
-    def __init__(self, gridSize=16, maxSteps=100):
+    def __init__(self, gridSize=16, maxSteps=100, observe_goal=False):
+        self.observe_goal = observe_goal
+
         # Action enumeration for this environment
         self.actions = MiniGridEnv.Actions
 
@@ -507,11 +509,19 @@ class MiniGridEnv(gym.Env):
         self.action_space = spaces.Discrete(len(self.actions))
 
         # The observations are RGB images
-        self.observation_space = spaces.Box(
+        image_space = spaces.Box(
             low=0,
             high=255,
             shape=OBS_ARRAY_SIZE
         )
+
+        if observe_goal:
+            self.observation_space = spaces.Dict({
+                'goal': spaces.Box(low=0, high=max(width, height), shape=(2)),
+                'image': image_space,
+            })
+        else:
+            self.observation_space = image_space
 
         # Range of possible rewards
         self.reward_range = (-1, 1000)
@@ -549,7 +559,8 @@ class MiniGridEnv(gym.Env):
             grid.set(height - 1, j, Wall())
 
         # Place a goal in the bottom-left corner
-        grid.set(width - 2, height - 2, Goal())
+        self.goal = (width - 2, height - 2)
+        grid.set(*self.goal, Goal())
 
         return grid
 
@@ -709,7 +720,10 @@ class MiniGridEnv(gym.Env):
 
         obs = grid.encode()
 
-        return obs
+        if self.observe_goal:
+            return obs, self.goal
+        else:
+            return obs
 
     def getObsRender(self, obs):
         """
