@@ -738,7 +738,7 @@ class MiniGridEnv(gym.Env):
         obs = grid.encode()
 
         if self.observe_goal:
-            return obs, self.goalPos
+            return {'image': obs, 'goal': self.goalPos}
         else:
             return obs
 
