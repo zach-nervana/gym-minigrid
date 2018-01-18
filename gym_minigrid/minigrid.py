@@ -499,7 +499,7 @@ class MiniGridEnv(gym.Env):
         forward = 2
         toggle = 3
 
-    def __init__(self, gridSize=16, maxSteps=100, observe_goal=False, random_goal=False
+    def __init__(self, gridSize=16, maxSteps=100, observe_goal=False, random_goal=False,
                  centered_agent_view=False):
         self.observe_goal = observe_goal
         self.random_goal = random_goal
