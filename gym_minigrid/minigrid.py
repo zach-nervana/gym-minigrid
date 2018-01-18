@@ -499,9 +499,11 @@ class MiniGridEnv(gym.Env):
         forward = 2
         toggle = 3
 
-    def __init__(self, gridSize=16, maxSteps=100, observe_goal=False, random_goal=False):
+    def __init__(self, gridSize=16, maxSteps=100, observe_goal=False, random_goal=False
+                 centered_agent_view=False):
         self.observe_goal = observe_goal
         self.random_goal = random_goal
+        self.centered_agent_view = centered_agent_view
 
         # Environment configuration
         self.gridSize = gridSize
@@ -650,24 +652,28 @@ class MiniGridEnv(gym.Env):
         Note: the bottom extent indices are not included in the set
         """
 
-        # Facing right
-        if self.agentDir == 0:
-            topX = self.agentPos[0]
-            topY = self.agentPos[1] - AGENT_VIEW_SIZE // 2
-        # Facing down
-        elif self.agentDir == 1:
-            topX = self.agentPos[0] - AGENT_VIEW_SIZE // 2
-            topY = self.agentPos[1]
-        # Facing right
-        elif self.agentDir == 2:
-            topX = self.agentPos[0] - AGENT_VIEW_SIZE + 1
-            topY = self.agentPos[1] - AGENT_VIEW_SIZE // 2
-        # Facing up
-        elif self.agentDir == 3:
-            topX = self.agentPos[0] - AGENT_VIEW_SIZE // 2
-            topY = self.agentPos[1] - AGENT_VIEW_SIZE + 1
+        if not self.centered_agent_view:
+            # Facing right
+            if self.agentDir == 0:
+                topX = self.agentPos[0]
+                topY = self.agentPos[1] - AGENT_VIEW_SIZE // 2
+            # Facing down
+            elif self.agentDir == 1:
+                topX = self.agentPos[0] - AGENT_VIEW_SIZE // 2
+                topY = self.agentPos[1]
+            # Facing right
+            elif self.agentDir == 2:
+                topX = self.agentPos[0] - AGENT_VIEW_SIZE + 1
+                topY = self.agentPos[1] - AGENT_VIEW_SIZE // 2
+            # Facing up
+            elif self.agentDir == 3:
+                topX = self.agentPos[0] - AGENT_VIEW_SIZE // 2
+                topY = self.agentPos[1] - AGENT_VIEW_SIZE + 1
+            else:
+                assert False
         else:
-            assert False
+            topX = self.agentPos[0] - AGENT_VIEW_SIZE // 2
+            topY = self.agentPos[1] - AGENT_VIEW_SIZE // 2
 
         botX = topX + AGENT_VIEW_SIZE
         botY = topY + AGENT_VIEW_SIZE
