@@ -44,6 +44,7 @@ class RandomGoalEnv(MiniGridEnv):
             observe_goal=True,
             random_goal=True,
             centered_agent_view=True,
+            actions=CardinalActions,
         )
 
 register(

@@ -30,21 +30,40 @@ def main():
 
     def keyDownCb(keyName):
         action = 0
-        if keyName == 'LEFT':
-            action = env.actions.left
-        elif keyName == 'RIGHT':
-            action = env.actions.right
-        elif keyName == 'UP':
-            action = env.actions.forward
-        elif keyName == 'SPACE':
-            action = env.actions.toggle
-        elif keyName == 'RETURN':
-            env.reset()
-        elif keyName == 'ESCAPE':
-            sys.exit(0)
+        if env.actions == gym_minigrid.minigrid.CardinalActions:
+            if keyName == 'LEFT':
+                action = env.actions.left
+            elif keyName == 'RIGHT':
+                action = env.actions.right
+            elif keyName == 'UP':
+                action = env.actions.up
+            elif keyName == 'DOWN':
+                action = env.actions.down
+            elif keyName == 'SPACE':
+                action = env.actions.toggle
+            elif keyName == 'RETURN':
+                env.reset()
+            elif keyName == 'ESCAPE':
+                sys.exit(0)
+            else:
+                print("unknown key %s" % keyName)
+                return
         else:
-            print("unknown key %s" % keyName)
-            return
+            if keyName == 'LEFT':
+                action = env.actions.left
+            elif keyName == 'RIGHT':
+                action = env.actions.right
+            elif keyName == 'UP':
+                action = env.actions.forward
+            elif keyName == 'SPACE':
+                action = env.actions.toggle
+            elif keyName == 'RETURN':
+                env.reset()
+            elif keyName == 'ESCAPE':
+                sys.exit(0)
+            else:
+                print("unknown key %s" % keyName)
+                return
 
         obs, reward, done, info = env.step(action)
 

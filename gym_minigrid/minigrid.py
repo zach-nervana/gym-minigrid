@@ -482,6 +482,21 @@ class Grid:
 
         return grid
 
+# Enumeration of possible actions
+class CardinalActions(IntEnum):
+    left = 0
+    right = 1
+    up = 2
+    down = 3
+    toggle = 4
+
+# Enumeration of possible actions
+class RelativeActions(IntEnum):
+    left = 0
+    right = 1
+    forward = 2
+    toggle = 3
+
 class MiniGridEnv(gym.Env):
     """
     2D grid world game environment
@@ -492,15 +507,8 @@ class MiniGridEnv(gym.Env):
         'video.frames_per_second' : 10
     }
 
-    # Enumeration of possible actions
-    class Actions(IntEnum):
-        left = 0
-        right = 1
-        forward = 2
-        toggle = 3
-
     def __init__(self, gridSize=16, maxSteps=100, observe_goal=False, random_goal=False,
-                 centered_agent_view=False):
+                 centered_agent_view=False, actions=RelativeActions):
         self.observe_goal = observe_goal
         self.random_goal = random_goal
         self.centered_agent_view = centered_agent_view
@@ -512,7 +520,7 @@ class MiniGridEnv(gym.Env):
         self.startDir = 0
 
         # Action enumeration for this environment
-        self.actions = MiniGridEnv.Actions
+        self.actions = actions
 
         # Actions are discrete integer values
         self.action_space = spaces.Discrete(len(self.actions))
@@ -686,41 +694,73 @@ class MiniGridEnv(gym.Env):
         reward = 0
         done = False
 
-        # Rotate left
-        if action == self.actions.left:
-            self.agentDir -= 1
-            if self.agentDir < 0:
-                self.agentDir += 4
+        if self.actions == CardinalActions:
+            if action == self.actions.left:
+                u, v = -1, 0
+            elif action == self.actions.right:
+                u, v = 1, 0
+            elif action == self.actions.up:
+                u, v = 0, -1
+            elif action == self.actions.down:
+                u, v = 0, 1
+            # Pick up or trigger/activate an item
+            elif action == self.actions.toggle:
+                u, v = 0, 0
+                objPos = self.agentPos
+                cell = self.grid.get(*objPos)
+                if cell and cell.canPickup():
+                    if self.carrying is None:
+                        self.carrying = cell
+                        self.grid.set(*objPos, None)
+                elif cell:
+                    cell.toggle(self, objPos)
 
-        # Rotate right
-        elif action == self.actions.right:
-            self.agentDir = (self.agentDir + 1) % 4
+            else:
+                assert False, "unknown action"
 
-        # Move forward
-        elif action == self.actions.forward:
-            u, v = self.getDirVec()
             newPos = (self.agentPos[0] + u, self.agentPos[1] + v)
             targetCell = self.grid.get(newPos[0], newPos[1])
             if targetCell == None or targetCell.canOverlap():
                 self.agentPos = newPos
             elif targetCell.type == 'goal':
+                self.agentPos = newPos
                 done = True
                 reward = 1000 - self.stepCount
-
-        # Pick up or trigger/activate an item
-        elif action == self.actions.toggle:
-            u, v = self.getDirVec()
-            objPos = (self.agentPos[0] + u, self.agentPos[1] + v)
-            cell = self.grid.get(*objPos)
-            if cell and cell.canPickup():
-                if self.carrying is None:
-                    self.carrying = cell
-                    self.grid.set(*objPos, None)
-            elif cell:
-                cell.toggle(self, objPos)
-
         else:
-            assert False, "unknown action"
+            # Rotate left
+            if action == self.actions.left:
+                self.agentDir -= 1
+                if self.agentDir < 0:
+                    self.agentDir += 4
+            # Rotate right
+            elif action == self.actions.right:
+                self.agentDir = (self.agentDir + 1) % 4
+            # Move forward
+            elif action == self.actions.forward:
+                u, v = self.getDirVec()
+                newPos = (self.agentPos[0] + u, self.agentPos[1] + v)
+                targetCell = self.grid.get(newPos[0], newPos[1])
+                if targetCell is None or targetCell.canOverlap():
+                    self.agentPos = newPos
+                elif targetCell.type == 'goal':
+                    self.agentPos = newPos
+                    done = True
+                    reward = 1000 - self.stepCount
+
+            # Pick up or trigger/activate an item
+            elif action == self.actions.toggle:
+                u, v = self.getDirVec()
+                objPos = (self.agentPos[0] + u, self.agentPos[1] + v)
+                cell = self.grid.get(*objPos)
+                if cell and cell.canPickup():
+                    if self.carrying is None:
+                        self.carrying = cell
+                        self.grid.set(*objPos, None)
+                elif cell:
+                    cell.toggle(self, objPos)
+
+            else:
+                assert False, "unknown action"
 
         if self.stepCount >= self.maxSteps:
             done = True
@@ -738,11 +778,8 @@ class MiniGridEnv(gym.Env):
 
         grid = self.grid.slice(topX, topY, AGENT_VIEW_SIZE, AGENT_VIEW_SIZE)
 
-        for i in range(self.agentDir + 1):
-            grid = grid.rotateLeft()
-
         obs = grid.encode()
-
+        print('obs[:,:,0]', obs[:,:,0])
         if self.observe_goal:
             return {'image': obs, 'goal': self.goalPos}
         else:
