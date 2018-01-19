@@ -508,8 +508,9 @@ class MiniGridEnv(gym.Env):
     }
 
     def __init__(self, gridSize=16, maxSteps=100, observe_goal=False, random_goal=False,
-                 centered_agent_view=False, actions=RelativeActions):
+                 centered_agent_view=False, actions=RelativeActions, observe_grid=True):
         self.observe_goal = observe_goal
+        self.observe_grid = observe_grid
         self.random_goal = random_goal
         self.centered_agent_view = centered_agent_view
 
@@ -526,19 +527,30 @@ class MiniGridEnv(gym.Env):
         self.action_space = spaces.Discrete(len(self.actions))
 
         # The observations are RGB images
-        image_space = spaces.Box(
+        grid_space = spaces.Box(
             low=0,
             high=255,
             shape=OBS_ARRAY_SIZE
         )
+        goal_space = spaces.Box(
+            low=0,
+            high=max(self.gridSize, self.gridSize),
+            shape=(2),
+        )
 
-        if observe_goal:
+        if observe_goal and observe_grid:
             self.observation_space = spaces.Dict({
-                'goal': spaces.Box(low=0, high=max(self.gridSize, self.gridSize), shape=(2)),
-                'image': image_space,
+                'goal': goal_space,
+                'image': grid_space,
             })
+        elif observe_goal:
+            self.observation_space = goal_space
+        elif observe_grid:
+            self.observation_space = grid_space
         else:
-            self.observation_space = image_space
+            raise ValueError(
+                'either observe_goal or observe_grid must be True, but both were False'
+            )
 
         # Range of possible rewards
         self.reward_range = (-1, 1000)
@@ -778,13 +790,19 @@ class MiniGridEnv(gym.Env):
 
         grid = self.grid.slice(topX, topY, AGENT_VIEW_SIZE, AGENT_VIEW_SIZE)
 
-        obs = grid.encode()
+        grid_observation = grid.encode()
         relative_goal_position = np.array(self.goalPos) - np.array(self.agentPos)
-        print('obs[:,:,0]', obs[:,:,0], relative_goal_position)
-        if self.observe_goal:
-            return {'image': obs, 'goal': relative_goal_position}
+
+        if self.observe_goal and self.observe_grid:
+            observation = {'image': grid_observation, 'goal': relative_goal_position}
+        elif self.observe_goal:
+            observation = relative_goal_position
         else:
-            return obs
+            observation = grid_observation
+
+        print('observation', observation)
+
+        return observation
 
     def getObsRender(self, obs):
         """

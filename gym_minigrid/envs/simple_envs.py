@@ -42,6 +42,7 @@ class RandomGoalEnv(MiniGridEnv):
             gridSize=size,
             maxSteps=3 * size,
             observe_goal=True,
+            observe_grid=False,
             random_goal=True,
             centered_agent_view=True,
             actions=CardinalActions,
