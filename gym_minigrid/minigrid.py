@@ -508,11 +508,13 @@ class MiniGridEnv(gym.Env):
     }
 
     def __init__(self, gridSize=16, maxSteps=100, observe_goal=False, random_goal=False,
-                 centered_agent_view=False, actions=RelativeActions, observe_grid=True):
+                 centered_agent_view=False, actions=RelativeActions, observe_grid=True,
+                 verbose=False):
         self.observe_goal = observe_goal
         self.observe_grid = observe_grid
         self.random_goal = random_goal
         self.centered_agent_view = centered_agent_view
+        self.verbose = verbose
 
         # Environment configuration
         self.gridSize = gridSize
@@ -800,7 +802,8 @@ class MiniGridEnv(gym.Env):
         else:
             observation = grid_observation
 
-        print('observation', observation)
+        if self.verbose:
+            print('observation', observation)
 
         return observation
 
