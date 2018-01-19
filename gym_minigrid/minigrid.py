@@ -779,9 +779,10 @@ class MiniGridEnv(gym.Env):
         grid = self.grid.slice(topX, topY, AGENT_VIEW_SIZE, AGENT_VIEW_SIZE)
 
         obs = grid.encode()
-        print('obs[:,:,0]', obs[:,:,0])
+        relative_goal_position = np.array(self.goalPos) - np.array(self.agentPos)
+        print('obs[:,:,0]', obs[:,:,0], relative_goal_position)
         if self.observe_goal:
-            return {'image': obs, 'goal': self.goalPos}
+            return {'image': obs, 'goal': relative_goal_position}
         else:
             return obs
 
